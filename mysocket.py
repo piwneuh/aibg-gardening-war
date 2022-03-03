@@ -10,6 +10,9 @@ PLAYER_2_WAIT = 3
 import socket
 import time
 import os
+
+from bot_input import bot_input
+from receive_DTO import DTO
 exec(open(os.getcwd() + "\\receive_DTO.py").read())
 print('running ' + os.getcwd() + "\\receive_DTO.py")
 exec(open(os.getcwd() + "\\send_DTO.py").read())
