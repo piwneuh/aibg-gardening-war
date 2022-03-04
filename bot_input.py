@@ -103,6 +103,14 @@ def listToAction(list):
         actions.append(Action(x=l.x, y=l.y))
     return actions
 
+def findSpecial(dto):
+    for tile in dto.source.tiles:
+        if(tile.bIsSpecial):
+            return tile
+    if dto.source.tiles[1] is None:
+        return dto.source.tiles[0]
+    return dto.source.tiles[1]
+
 def phase_zero(dto):
     global phase
     global step
@@ -119,15 +127,15 @@ def phase_zero(dto):
 
     if step == 1:
         step = step + 1
-        return InputAction('P', [Action(cardid=6, x=0, y=0, )]).toJSON()
+        return InputAction('P', [Action(cardid=6, x=dto.source.tiles[0].x, y=dto.source.tiles[0].y)]).toJSON()
 
     if step == 2:
         step = step + 1
-        return InputAction('W', [Action(amount=1, x=0, y=0, )]).toJSON()
+        return InputAction('W', [Action(amount=1, x=dto.source.tiles[0].x, y=dto.source.tiles[0].y)]).toJSON()
 
     if step == 3:
         step = step + 1
-        return InputAction('H', [Action(x=0, y=0, )]).toJSON()
+        return InputAction('H', [Action(x=0, y=0)]).toJSON()
 
     if step == 4:
         step = step + 1
@@ -136,23 +144,23 @@ def phase_zero(dto):
 
     if step == 5:
         step = step + 1
-        if(dto.source.tiles[1].bIsSpecial):
+        if(findSpecial(dto).bIsSpecial):
             return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
         else:
             return InputAction('C', [Action(x=0, y=0, cardid=5, amount=2), Action(x=0, y=0, cardid=0, amount=10)]).toJSON()
     if step == 6:
         step = step + 1
-        if(dto.source.tiles[1].bIsSpecial):
-            return InputAction('P', [Action(cardid=6, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
+        if(findSpecial(dto).bIsSpecial):
+            return InputAction('P', [Action(cardid=6, x=findSpecial(dto).x, y=findSpecial(dto).y)]).toJSON()
         else:
-            return InputAction('P', [Action(cardid=5, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y), Action(cardid=5, x=0, y=0)]).toJSON()
+            return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
 
     if step == 7:
         step = step + 1
         if(dto.source.tiles[1].bIsSpecial):
-            return InputAction('W', [Action(amount=1, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
+            return InputAction('W', [Action(amount=1, x=findSpecial(dto).x, y=findSpecial(dto).y)]).toJSON()
         else:
-            return InputAction('W', [Action(amount=5, x=0, y=0), Action(amount=5, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
+            return InputAction('W', watering(dto)).toJSON()
 
     if step == 8:
         phase = 1
