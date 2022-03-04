@@ -5,6 +5,8 @@ from send_DTO import Action, InputAction
 phase = 0
 step = 0
 graded_tiles = []
+shop = 1
+flag = 0
 
 class Graded_Tile:
     def __init__(self, x, y):
@@ -25,6 +27,12 @@ def get_special_tiles(tiles, enemy, source):
         if tile_occupied(enemy, source.tiles, t):
             special_tiles.remove(t)           
     return special_tiles
+
+def get_mole_target(enemy):
+    for t in enemy.tiles:
+        if t.bIsSpecial:
+            return t
+    return enemy.tiles[0]
        
 def tile_occupied(enemy, source_tiles, tile):
     for t in enemy.tiles:
@@ -75,31 +83,20 @@ def get_neighbours(tiles, path_tiles, enemy):
     return neighbours
 
 def find_optional_buys(amount, graded_tiles, source, enemy):
+    global flag
     path_tiles = source.tiles
     chosen_tiles = []
     amount = math.floor(amount)
-    print(amount)
+    #print(amount)
     maxAmount = 64 - len(source.tiles) - len(enemy.tiles)
     if amount > maxAmount:
-        chosen_tiles = graded_tiles
+        #chosen_tiles = graded_tiles
+        chosen_tiles = []
         for tile in graded_tiles:
-            if tile_occupied(enemy, source.tiles, tile):
-                chosen_tiles.remove(tile)
+            if not tile_occupied(enemy, source.tiles, tile):
+                chosen_tiles.append(tile)
+        flag = flag + 1
         return chosen_tiles
-
-        #source_tiles2 = []
-        #source_tiles2 = source.tiles
-
-        #neighbours = get_neighbours(graded_tiles, source.tiles, enemy)
-        #source_tiles2.extend(neighbours)
-        #neighbours2 = get_neighbours(graded_tiles, source_tiles2, enemy)
-        #neighbours2.extend(neighbours)
-
-        #source_tiles2.extend(neighbours2)
-        #neighbours3 = get_neighbours(graded_tiles, source_tiles2, enemy)
-        #neighbours3.extend(neighbours2)
-
-        #return neighbours3
 
     while amount > 0:
         neighbours = get_neighbours(graded_tiles, path_tiles, enemy)
@@ -112,7 +109,7 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     
 
 def get_best_neighbour(neighbours):
-    print("KOMSE:", neighbours[0].x, neighbours[0].y)
+    #print("KOMSE:", neighbours[0].x, neighbours[0].y)
     return(neighbours[0])
 
 
@@ -211,11 +208,48 @@ def watering(dto):
         actions.append(Action(amount=cans, x=dto.source.tiles[i].x, y=dto.source.tiles[i].y))
     return actions
 
+def end_phase(dto):
+    global phase
+    global step
+    global shop
+    owned = len(dto.source.tiles)
+    if step == 0 and shop == 1:
+        step = step + 1
+        shop = 0
+        return InputAction('C', [Action(x=0, y=0, cardid=2, amount=4),
+                                 Action(x=0, y=0, cardid=5, amount=owned*4),
+                                 Action(x=0, y=0, cardid=0, amount=owned*20),
+                                 Action(x=0, y=0, cardid=1, amount=4)]).toJSON()
+
+    if step == 0 and shop == 0:
+        step = step + 1
+        target = get_mole_target(dto.enemy)
+        return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
+
+    if step == 1:
+        step = step + 1
+        return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
+
+    if step == 2:
+        step = step + 1
+        return InputAction('F', [Action(x=0, y=0)]).toJSON()
+
+    if step == 3:
+        step = step + 1
+        return InputAction('W', watering(dto)).toJSON()
+
+    if step == 4:
+        step = 0
+        if(dto.source.cards[5].owned == 0):
+            shop = 1
+        return InputAction('H', [Action(x=0, y=0)]).toJSON()
+
 
 def phase_one(dto):
     global phase
     global step
     global graded_tiles
+    global flag
 
     if len(dto.source.tiles) == 1:
         phase = 0
@@ -226,10 +260,10 @@ def phase_one(dto):
     if step == 0 and amount >= 1:
         step = step + 1
         list = find_optional_buys(getAmount(dto), graded_tiles, dto.source, dto.enemy)
-
-        # for l in list:
-        #     print("DA KUPI SLEDECE:", l.x, l.y, l.grade)
-
+        if flag == 2:
+            phase = 2
+            step = 0
+            return end_phase(dto)
         return InputAction('L', listToAction(list)).toJSON()
     elif step == 0 and amount < 1:
         step = step + 1
@@ -257,10 +291,8 @@ def phase_one(dto):
         step = 0
         return InputAction('H', [Action(x=0, y=0)]).toJSON()
 
-    return {}
 
-def end_phase(dto):
-    pass
+    return {}
 
 def bot_input(dto):
     global phase
