@@ -79,7 +79,6 @@ def get_neighbours(tiles, path_tiles, enemy):
                 if (t.y == st.y - 1 or t.y == st.y + 1 or t.y == st.y) and not tile_occupied(enemy, path_tiles, t):  
                     neighbours.append(t)
     neighbours.sort(key=lambda x: x.grade, reverse=True)
-    #print(neighbours)
     return neighbours
 
 def find_optional_buys(amount, graded_tiles, source, enemy):
@@ -87,10 +86,8 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     path_tiles = source.tiles
     chosen_tiles = []
     amount = math.floor(amount)
-    #print(amount)
     maxAmount = 64 - len(source.tiles) - len(enemy.tiles)
     if amount > maxAmount:
-        #chosen_tiles = graded_tiles
         chosen_tiles = []
         for tile in graded_tiles:
             if not tile_occupied(enemy, source.tiles, tile):
@@ -109,7 +106,6 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     
 
 def get_best_neighbour(neighbours):
-    #print("KOMSE:", neighbours[0].x, neighbours[0].y)
     return(neighbours[0])
 
 
@@ -136,8 +132,6 @@ def phase_zero(dto):
         copy_tiles(dto.tiles)
         special_tiles = get_special_tiles(dto.tiles, dto.enemy, dto.source)
         graded_tiles = calculate_tile_grades(graded_tiles, special_tiles)
-        #print(graded_tiles[5].grade)
-        #print(graded_tiles[2].grade)
         step = step + 1
         return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
 
@@ -186,7 +180,6 @@ def phase_zero(dto):
 
 def getAmount(dto):
     amount = (dto.source.gold - 3000 - len(dto.source.tiles)*2000) / 7000
-    #print(amount)
     return amount
 
 
@@ -226,19 +219,24 @@ def end_phase(dto):
         target = get_mole_target(dto.enemy)
         return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
 
-    if step == 1:
+    if step == 1 and shop == 0:
         step = step + 1
-        return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
+        target = get_mole_target(dto.enemy)
+        return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
 
     if step == 2:
         step = step + 1
-        return InputAction('F', [Action(x=0, y=0)]).toJSON()
+        return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
 
     if step == 3:
         step = step + 1
-        return InputAction('W', watering(dto)).toJSON()
+        return InputAction('F', [Action(x=0, y=0)]).toJSON()
 
     if step == 4:
+        step = step + 1
+        return InputAction('W', watering(dto)).toJSON()
+
+    if step == 5:
         step = 0
         if(dto.source.cards[5].owned == 0):
             shop = 1
