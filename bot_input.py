@@ -82,6 +82,8 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     maxAmount = 64 - len(source.tiles) - len(enemy.tiles)
     if amount > maxAmount:
         amount = maxAmount
+        neighbours = get_neighbours(graded_tiles, source.tiles, enemy)
+        return neighbours
 
     while amount > 0:
         neighbours = get_neighbours(graded_tiles, path_tiles, enemy)
@@ -94,7 +96,7 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     
 
 def get_best_neighbour(neighbours):
-    #print(neighbours[0].x, neighbours[0].y)
+    print("KOMSE:", neighbours[0].x, neighbours[0].y)
     return(neighbours[0])
 
 
@@ -208,6 +210,10 @@ def phase_one(dto):
     if step == 0 and amount >= 1:
         step = step + 1
         list = find_optional_buys(getAmount(dto), graded_tiles, dto.source, dto.enemy)
+
+        # for l in list:
+        #     print("DA KUPI SLEDECE:", l.x, l.y, l.grade)
+
         return InputAction('L', listToAction(list)).toJSON()
     elif step == 0 and amount < 1:
         step = step + 1
