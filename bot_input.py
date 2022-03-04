@@ -1,3 +1,4 @@
+import math
 
 from send_DTO import Action, InputAction
 
@@ -73,12 +74,14 @@ def get_neighbours(tiles, path_tiles, enemy):
                 if (t.y == st.y - 1 or t.y == st.y + 1 or t.y == st.y) and not tile_occupied(enemy, path_tiles, t):  
                     neighbours.append(t)
     neighbours.sort(key=lambda x: x.grade, reverse=True)
-    print(neighbours)
+    #print(neighbours)
     return neighbours
 
 def find_optional_buys(amount, graded_tiles, source, enemy):
     path_tiles = source.tiles
     chosen_tiles = []
+    amount = math.floor(amount)
+    print(amount)
     while amount > 0:
         neighbours = get_neighbours(graded_tiles, path_tiles, enemy)
         best_neighbour = get_best_neighbour(neighbours)
@@ -90,7 +93,7 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     
 
 def get_best_neighbour(neighbours):
-    print(neighbours[0].x, neighbours[0].y)
+    #print(neighbours[0].x, neighbours[0].y)
     return(neighbours[0])
 
 
@@ -109,8 +112,8 @@ def phase_zero(dto):
         copy_tiles(dto.tiles)
         special_tiles = get_special_tiles(dto.tiles, dto.enemy, dto.source)
         graded_tiles = calculate_tile_grades(graded_tiles, special_tiles)
-        print(graded_tiles[5].grade)
-        print(graded_tiles[2].grade)
+        #print(graded_tiles[5].grade)
+        #print(graded_tiles[2].grade)
         step = step + 1
         return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
 
@@ -128,7 +131,7 @@ def phase_zero(dto):
 
     if step == 4:
         step = step + 1
-        list = find_optional_buys(getAmount(dto), graded_tiles, dto.source, dto.enemy)
+        list = find_optional_buys(1, graded_tiles, dto.source, dto.enemy)
         return InputAction('L', listToAction(list)).toJSON()
 
     if step == 5:
@@ -159,7 +162,7 @@ def phase_zero(dto):
 
 def getAmount(dto):
     amount = (dto.source.gold - 3000 - len(dto.source.tiles)*2000) / 7000
-    print(amount)
+    #print(amount)
     return amount
 
 
@@ -173,7 +176,7 @@ def ownedTilesToAction(dto, cardid):
 def watering(dto):
     actions = []
     cans = 0
-    if dto.daysTillRain == 1:
+    if dto.daysTillRain == 1 or dto.source.tiles[0].plantDTO.waterNeeded == 3:
         cans = 3
     else:
         cans = 5
