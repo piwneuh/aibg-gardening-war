@@ -52,9 +52,6 @@ def calculate_tile_grades(tiles, special_tiles):
             if t.y == st.y + 2 or t.y == st.y - 2:
                 if t.x == (st.x - 1) or t.x == st.x or t.x == (st.x + 1):
                     t.grade = t.grade + 2
-
-
-
             if t.x == st.x + 3 or t.x == st.x - 3:
                 if t.y == (st.y - 3) or t.y == (st.y - 2) or t.y == (st.y - 1) or t.y == st.y or t.y == (st.y + 3) or t.y == (st.y + 2) or t.y == (st.y + 1):
                     t.grade = t.grade + 1
@@ -82,6 +79,10 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     chosen_tiles = []
     amount = math.floor(amount)
     print(amount)
+    maxAmount = 64 - len(source.tiles) - len(enemy.tiles)
+    if amount > maxAmount:
+        amount = maxAmount
+
     while amount > 0:
         neighbours = get_neighbours(graded_tiles, path_tiles, enemy)
         best_neighbour = get_best_neighbour(neighbours)
