@@ -91,11 +91,14 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
 
 def get_best_neighbour(neighbours):
     print(neighbours[0].x, neighbours[0].y)
-    return(neighbours[0])               
-            
+    return(neighbours[0])
 
 
-    return {}
+def listToAction(list):
+    actions = []
+    for l in list:
+        actions.append(Action(x=l.x, y=l.y))
+    return actions
 
 def phase_zero(dto):
     global phase
@@ -124,14 +127,9 @@ def phase_zero(dto):
         return InputAction('H', [Action(x=0, y=0, )]).toJSON()
 
     if step == 4:
-
-        list = find_optional_buys(12, graded_tiles, dto.source, dto.enemy)
-        for l in list:
-            print("DA KUPI SLEDECE:", l.x, l.y, l.grade)
-
         step = step + 1
-        #TODO: implement with BANE ALGORITHM
-        return InputAction('L', [Action(x=1, y=0)]).toJSON()
+        list = find_optional_buys(getAmount(dto), graded_tiles, dto.source, dto.enemy)
+        return InputAction('L', listToAction(list)).toJSON()
 
     if step == 5:
         step = step + 1
@@ -142,16 +140,16 @@ def phase_zero(dto):
     if step == 6:
         step = step + 1
         if(dto.source.tiles[1].bIsSpecial):
-            return InputAction('P', [Action(cardid=6, x=1, y=0, )]).toJSON()
+            return InputAction('P', [Action(cardid=6, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
         else:
-            return InputAction('P', [Action(cardid=5, x=1, y=0), Action(cardid=5, x=0, y=0)]).toJSON()
+            return InputAction('P', [Action(cardid=5, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y), Action(cardid=5, x=0, y=0)]).toJSON()
 
     if step == 7:
         step = step + 1
         if(dto.source.tiles[1].bIsSpecial):
-            return InputAction('W', [Action(amount=1, x=1, y=0, )]).toJSON()
+            return InputAction('W', [Action(amount=1, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
         else:
-            return InputAction('W', [Action(amount=5, x=0, y=0, ), Action(amount=5, x=1, y=0, )]).toJSON()
+            return InputAction('W', [Action(amount=5, x=0, y=0), Action(amount=5, x=dto.source.tiles[1].x, y=dto.source.tiles[1].y)]).toJSON()
 
     if step == 8:
         phase = 1
@@ -165,6 +163,25 @@ def getAmount(dto):
     return amount
 
 
+def ownedTilesToAction(dto, cardid):
+    actions = []
+    for i in range(0, len(dto.source.tiles)):
+        actions.append(Action(cardid=cardid, x=dto.source.tiles[i].x, y=dto.source.tiles[i].y))
+    return actions
+
+
+def watering(dto):
+    actions = []
+    cans = 0
+    if dto.daysTillRain == 1:
+        cans = 3
+    else:
+        cans = 5
+    for i in range(0, len(dto.source.tiles)):
+        actions.append(Action(amount=cans, x=dto.source.tiles[i].x, y=dto.source.tiles[i].y))
+    return actions
+
+
 def phase_one(dto):
     global phase
     global step
@@ -175,32 +192,41 @@ def phase_one(dto):
         return phase_zero(dto)
 
     amount = getAmount(dto)
-    print(amount)
-    if amount < 1:
-        step = 1
 
-    if step == 0:
+    if step == 0 and amount >= 1:
         step = step + 1
-        return InputAction('L', [Action(x=0, y=1)]).toJSON()
+        list = find_optional_buys(getAmount(dto), graded_tiles, dto.source, dto.enemy)
+        return InputAction('L', listToAction(list)).toJSON()
+    elif step == 0 and amount < 1:
+        step = step + 1
 
     if step == 1:
         step = step + 1
         owned = len(dto.source.tiles)
         return InputAction('C', [Action(x=0, y=0, cardid=2, amount=1),
-                                 Action(x=0, y=0, cardid=5, amount=owned)]).toJSON()
+                                 Action(x=0, y=0, cardid=5, amount=owned),
+                                 Action(x=0, y=0, cardid=0, amount=owned*5)]).toJSON()
+
     if step == 2:
         step = step + 1
+        return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
 
-    if phase == 1 and step == 4:
-        
+    if step == 3:
+        step = step + 1
+        return InputAction('F', [Action(x=0, y=0)]).toJSON()
 
-        phase = phase + 1
+    if step == 4:
+        step = step + 1
+        return InputAction('W', watering(dto)).toJSON()
+
+    if step == 5:
         step = 0
-        return InputAction('H', [Action(x=0, y=0,), Action(x=1, y=0,)]).toJSON()
+        return InputAction('H', [Action(x=0, y=0)]).toJSON()
 
-def phase_end(dto):
+    return {}
+
+def end_phase(dto):
     pass
-
 
 def bot_input(dto):
     global phase
@@ -211,5 +237,5 @@ def bot_input(dto):
     elif phase == 1:
         return phase_one(dto)
     else:
-        return phase_end(dto)
+        return end_phase(dto)
 
