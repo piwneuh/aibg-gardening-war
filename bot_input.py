@@ -39,7 +39,7 @@ def calculate_tile_grades(tiles, special_tiles):
         for t in tiles:
             if t.x == st.x:
                 if t.y == st.y:
-                    t.grade = 20
+                    t.grade = 30
                 if t.y == (st.y - 1) or t.y == (st.y + 1) :
                     t.grade = t.grade + 3
             if t.x == st.x + 1 or t.x == st.x - 1:
@@ -51,6 +51,15 @@ def calculate_tile_grades(tiles, special_tiles):
             if t.y == st.y + 2 or t.y == st.y - 2:
                 if t.x == (st.x - 1) or t.x == st.x or t.x == (st.x + 1):
                     t.grade = t.grade + 2
+
+
+
+            if t.x == st.x + 3 or t.x == st.x - 3:
+                if t.y == (st.y - 3) or t.y == (st.y - 2) or t.y == (st.y - 1) or t.y == st.y or t.y == (st.y + 3) or t.y == (st.y + 2) or t.y == (st.y + 1):
+                    t.grade = t.grade + 1
+            if t.y == st.y + 3 or t.y == st.y - 3:
+                if t.x == (st.x - 2) or t.x == (st.x - 1) or t.x == st.x or t.x == (st.x + 1) or t.x == (st.x + 2):
+                    t.grade = t.grade + 1
     return tiles
 
 def get_neighbours(tiles, path_tiles, enemy):
@@ -81,8 +90,8 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     
 
 def get_best_neighbour(neighbours):
-    print(neighbours[1].x, neighbours[1].y)
-    return(neighbours[1])               
+    print(neighbours[0].x, neighbours[0].y)
+    return(neighbours[0])               
             
 
 
@@ -115,6 +124,11 @@ def phase_zero(dto):
         return InputAction('H', [Action(x=0, y=0, )]).toJSON()
 
     if step == 4:
+
+        list = find_optional_buys(12, graded_tiles, dto.source, dto.enemy)
+        for l in list:
+            print("DA KUPI SLEDECE:", l.x, l.y, l.grade)
+
         step = step + 1
         #TODO: implement with BANE ALGORITHM
         return InputAction('L', [Action(x=1, y=0)]).toJSON()
@@ -154,6 +168,7 @@ def getAmount(dto):
 def phase_one(dto):
     global phase
     global step
+    global graded_tiles
 
     if len(dto.source.tiles) == 1:
         phase = 0
@@ -177,10 +192,7 @@ def phase_one(dto):
         step = step + 1
 
     if phase == 1 and step == 4:
-        list = find_optional_buys(6, graded_tiles, dto.source, dto.enemy)
-        for l in list:
-            print("DA KUPI SLEDECE:", l.x, l.y)
-
+        
 
         phase = phase + 1
         step = 0
