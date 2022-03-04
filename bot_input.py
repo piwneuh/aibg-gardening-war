@@ -1,4 +1,5 @@
 import math
+from urllib.robotparser import RobotFileParser
 
 from send_DTO import Action, InputAction
 
@@ -7,6 +8,7 @@ step = 0
 graded_tiles = []
 shop = 1
 flag = 0
+counter = 0
 
 class Graded_Tile:
     def __init__(self, x, y):
@@ -242,6 +244,53 @@ def end_phase(dto):
             shop = 1
         return InputAction('H', [Action(x=0, y=0)]).toJSON()
 
+def def_phase(dto):
+    global phase
+    global step
+    global shop
+    global counter
+    
+    owned = len(dto.source.tiles)
+    if step == 0 and shop == 1:
+        step = step + 1
+        shop = 0
+        return InputAction('C', [Action(x=0, y=0, cardid=2, amount=4),
+                                 Action(x=0, y=0, cardid=5, amount=owned*4),
+                                 Action(x=0, y=0, cardid=0, amount=owned*20),
+                                 Action(x=0, y=0, cardid=1, amount=4)]).toJSON()
+
+    if step == 0 and shop == 0:
+        step = step + 1
+        target = get_mole_target(dto.enemy)
+        return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
+
+    if step == 1 and shop == 0:
+        step = step + 1
+        target = get_mole_target(dto.enemy)
+        return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
+    
+    if step == 2 and shop == 0:
+        step = step + 1
+        target = get_mole_target(dto.enemy)
+        return InputAction('M', [Action(x=target.x, y=target.y)]).toJSON()
+
+    if step == 3:
+        step = step + 1
+        return InputAction('P', ownedTilesToAction(dto, 5)).toJSON()
+
+    if step == 4:
+        step = step + 1
+        return InputAction('F', [Action(x=0, y=0)]).toJSON()
+
+    if step == 5:
+        step = step + 1
+        return InputAction('W', watering(dto)).toJSON()
+
+    if step == 6:
+        step = 0
+        if dto.source.cards[5].owned == 0:
+            shop = 1
+        return InputAction('H', [Action(x=0, y=0)]).toJSON()
 
 def phase_one(dto):
     global phase
@@ -295,11 +344,20 @@ def phase_one(dto):
 def bot_input(dto):
     global phase
     global step
+    global role 
+
+    if dto.source.tiles[0].x == 0:
+        role = 'ATK'
+    else:
+        role = 'DEF'
 
     if phase == 0:
         return phase_zero(dto)
     elif phase == 1:
         return phase_one(dto)
     else:
-        return end_phase(dto)
+        if role == 'ATK':
+            return end_phase(dto)
+        else:
+            return def_phase(dto)
 
