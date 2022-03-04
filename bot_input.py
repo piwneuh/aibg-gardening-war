@@ -81,9 +81,25 @@ def find_optional_buys(amount, graded_tiles, source, enemy):
     print(amount)
     maxAmount = 64 - len(source.tiles) - len(enemy.tiles)
     if amount > maxAmount:
-        amount = maxAmount
-        neighbours = get_neighbours(graded_tiles, source.tiles, enemy)
-        return neighbours
+        chosen_tiles = graded_tiles
+        for tile in graded_tiles:
+            if tile_occupied(enemy, source.tiles, tile):
+                chosen_tiles.remove(tile)
+        return chosen_tiles
+
+        #source_tiles2 = []
+        #source_tiles2 = source.tiles
+
+        #neighbours = get_neighbours(graded_tiles, source.tiles, enemy)
+        #source_tiles2.extend(neighbours)
+        #neighbours2 = get_neighbours(graded_tiles, source_tiles2, enemy)
+        #neighbours2.extend(neighbours)
+
+        #source_tiles2.extend(neighbours2)
+        #neighbours3 = get_neighbours(graded_tiles, source_tiles2, enemy)
+        #neighbours3.extend(neighbours2)
+
+        #return neighbours3
 
     while amount > 0:
         neighbours = get_neighbours(graded_tiles, path_tiles, enemy)
