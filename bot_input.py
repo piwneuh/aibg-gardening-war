@@ -1,10 +1,7 @@
 
 from send_DTO import Action, InputAction
 
-
-
 phase = 0
-
 step = 0
 graded_tiles = []
 
@@ -18,67 +15,6 @@ def copy_tiles(tiles):
     for t in tiles:
         graded_tile = Graded_Tile(t.x, t.y)
         graded_tiles.append(graded_tile)
-    
-    
-
-def bot_input(dto):
-
-    global phase
-    global step
-    global graded_tiles
-
-    if phase == 0 and step == 0:
-        copy_tiles(dto.tiles)
-        special_tiles = get_special_tiles(dto.tiles, dto.enemy, dto.source)
-        graded_tiles = calculate_tile_grades(graded_tiles, special_tiles)
-        print(graded_tiles[5].grade)
-        print(graded_tiles[2].grade)
-
-        
-        step = step + 1
-        return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
-
-    if phase == 0 and step == 1:
-        step = step + 1
-        return InputAction('P', [Action(cardid=6, x=0, y=0,)]).toJSON()
-
-    if phase == 0 and step == 2:
-        step = step + 1
-        return InputAction('W', [Action(amount=1, x=0, y=0,)]).toJSON()
-
-    if phase == 0 and step == 3:
-        phase = phase + 1
-        step = 0
-        return InputAction('H', [Action(x=0, y=0,)]).toJSON()
-
-
-    if phase == 1 and step == 0:
-
-        step = step + 1
-        return InputAction('L', [Action(x=1, y=0)]).toJSON()
-
-
-    if phase == 1 and step == 1:
-        step = step + 1
-        return InputAction('C', [Action(x=0, y=0, cardid=5, amount=2), Action(x=0, y=0, cardid=0, amount=10)]).toJSON()
-
-    if phase == 1 and step == 2:
-        step = step + 1
-        return InputAction('P', [Action(cardid=5, x=0, y=0,), Action(cardid=5, x=1, y=0,)]).toJSON()
-
-    if phase == 1 and step == 3:
-        step = step + 1
-        return InputAction('W', [Action(amount=5, x=0, y=0,), Action(amount=5, x=1, y=0,)]).toJSON()
-
-    if phase == 1 and step == 4:
-        list = find_optional_buys(6, graded_tiles, dto.source, dto.enemy)
-        for l in list:
-            print("DA KUPI SLEDECE:", l.x, l.y)
-
-
-        phase = phase + 1
-        step = 0
-        return InputAction('H', [Action(x=0, y=0,), Action(x=1, y=0,)]).toJSON()
 
 def get_special_tiles(tiles, enemy, source):
     special_tiles = []
@@ -150,4 +86,118 @@ def get_best_neighbour(neighbours):
             
 
 
+    return {}
+
+def phase_zero(dto):
+    global phase
+    global step
+    global graded_tiles
+
+    if step == 0:
+        copy_tiles(dto.tiles)
+        special_tiles = get_special_tiles(dto.tiles, dto.enemy, dto.source)
+        graded_tiles = calculate_tile_grades(graded_tiles, special_tiles)
+        print(graded_tiles[5].grade)
+        print(graded_tiles[2].grade)
+        step = step + 1
+        return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
+
+    if step == 1:
+        step = step + 1
+        return InputAction('P', [Action(cardid=6, x=0, y=0, )]).toJSON()
+
+    if step == 2:
+        step = step + 1
+        return InputAction('W', [Action(amount=1, x=0, y=0, )]).toJSON()
+
+    if step == 3:
+        step = step + 1
+        return InputAction('H', [Action(x=0, y=0, )]).toJSON()
+
+    if step == 4:
+        step = step + 1
+        #TODO: implement with BANE ALGORITHM
+        return InputAction('L', [Action(x=1, y=0)]).toJSON()
+
+    if step == 5:
+        step = step + 1
+        if(dto.source.tiles[1].bIsSpecial):
+            return InputAction('C', [Action(x=0, y=0, cardid=6, amount=1), Action(x=0, y=0, cardid=0, amount=1)]).toJSON()
+        else:
+            return InputAction('C', [Action(x=0, y=0, cardid=5, amount=2), Action(x=0, y=0, cardid=0, amount=10)]).toJSON()
+    if step == 6:
+        step = step + 1
+        if(dto.source.tiles[1].bIsSpecial):
+            return InputAction('P', [Action(cardid=6, x=1, y=0, )]).toJSON()
+        else:
+            return InputAction('P', [Action(cardid=5, x=1, y=0), Action(cardid=5, x=0, y=0)]).toJSON()
+
+    if step == 7:
+        step = step + 1
+        if(dto.source.tiles[1].bIsSpecial):
+            return InputAction('W', [Action(amount=1, x=1, y=0, )]).toJSON()
+        else:
+            return InputAction('W', [Action(amount=5, x=0, y=0, ), Action(amount=5, x=1, y=0, )]).toJSON()
+
+    if step == 8:
+        phase = 1
+        step = 0
+        return InputAction('H', [Action(x=0, y=0)]).toJSON()
+
+
+def getAmount(dto):
+    amount = (dto.source.gold - 3000 - len(dto.source.tiles)*2000) / 7000
+    print(amount)
+    return amount
+
+
+def phase_one(dto):
+    global phase
+    global step
+
+    if len(dto.source.tiles) == 1:
+        phase = 0
+        return phase_zero(dto)
+
+    amount = getAmount(dto)
+    print(amount)
+    if amount < 1:
+        step = 1
+
+    if step == 0:
+        step = step + 1
+        return InputAction('L', [Action(x=0, y=1)]).toJSON()
+
+    if step == 1:
+        step = step + 1
+        owned = len(dto.source.tiles)
+        return InputAction('C', [Action(x=0, y=0, cardid=2, amount=1),
+                                 Action(x=0, y=0, cardid=5, amount=owned)]).toJSON()
+    if step == 2:
+        step = step + 1
+
+    if phase == 1 and step == 4:
+        list = find_optional_buys(6, graded_tiles, dto.source, dto.enemy)
+        for l in list:
+            print("DA KUPI SLEDECE:", l.x, l.y)
+
+
+        phase = phase + 1
+        step = 0
+        return InputAction('H', [Action(x=0, y=0,), Action(x=1, y=0,)]).toJSON()
+
+def phase_end(dto):
+    pass
+
+
+def bot_input(dto):
+    global phase
+    global step
+
+    if phase == 0:
+        return phase_zero(dto)
+    elif phase == 1:
+        return phase_one(dto)
+    else:
+        return phase_end(dto)
 
