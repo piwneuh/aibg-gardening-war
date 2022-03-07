@@ -300,6 +300,7 @@ def phase_one(dto):
 
     if len(dto.source.tiles) == 1:
         phase = 0
+        step = 0
         return phase_zero(dto)
 
     amount = getAmount(dto)
